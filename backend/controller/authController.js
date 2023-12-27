@@ -62,7 +62,49 @@ const authController = {
         //6. response send
         return res.status(201).json({user})
     },
-    async login() {},
+    async login(req, res, next) {
+        // 1. validate user input
+        const userLoginSchema = Joi.object({
+            username: Joi.string().min(5).max(30).required(),
+            password: Joi.string().pattern(passwordPattern).required(),
+        });
+        // 2. if validation error, return error
+        const {error} = userLoginSchema.validate(req.body);
+        // 2. if error in validation -> return error via middleware
+        if (error){
+            return next(error);
+        }
+        // 3. math username and password
+        const {username, password} = req.body;
+        let user;
+        try {
+            user = await User.findOne({username: username});
+            //match username
+            if (!user){
+                const error = {
+                    status: 401,
+                    message: 'Invalid Username'
+                }
+                return next(error)
+            }
+            //match password
+            //req.body.passsword -> hash -> match
+            const match = await bcrypt.compare(password, user.password);
+            if (!match){
+                const error = {
+                    status: 401,
+                    message: 'Invalid Password'
+                }
+                return next(error)
+            }
+            
+        } catch (error) {
+            return next(error);
+        }
+        // 4. return response
+        return res.status(200).json({user: user})
+    }
+    
 }
 
 module.exports = authController;
