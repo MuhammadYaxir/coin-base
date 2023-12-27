@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const User = require('../models/user')
 const bcrypt = require('bcryptjs');
+const userDTO = require("../dto/user")
 
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,25}$/;
 
@@ -59,8 +60,9 @@ const authController = {
             password: hashedPassword
         });
         const user = await userToRegister.save();
+        const userDto = new userDTO(user);
         //6. response send
-        return res.status(201).json({user})
+        return res.status(201).json({user: userDto})
     },
     async login(req, res, next) {
         // 1. validate user input
@@ -101,8 +103,9 @@ const authController = {
         } catch (error) {
             return next(error);
         }
+        const userDto = new userDTO(user);
         // 4. return response
-        return res.status(200).json({user: user})
+        return res.status(200).json({user: userDto})
     }
     
 }
